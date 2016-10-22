@@ -1,61 +1,36 @@
-﻿using System;
-using System.IO;
-using Newtonsoft.Json.Linq;
+﻿using System.IO;
+using System.Collections.Specialized;
+using System;
+using System.Net;
 
 namespace RTWoWDataClient
 {
     class Program
     {
-
-        private enum eventTypes
-        {
-            Raid = 1,
-            Dungeon = 2,
-            PvP = 3,
-            Meeting = 4,
-            Other = 5,
-            HeroicDungeon = 6
-        }
-
-
-        static void Main(string[] args)
+        static void Main()
         {
             string[] contents = File.ReadAllLines(Properties.Settings.Default.SavedVariablesPath);
+            NameValueCollection kv = new NameValueCollection();
             foreach (string item in contents)
             {
                 if (item != "")
                 {
-                    produceJSON(item);
+                    kv.Add(Sanitize(item));
                 }
             }
+            using (WebClient client = new WebClient())
+            {
+                client.UploadValues("http://ragetroops.eu/api/wowdata/input.php", kv);
+            }
+            Console.WriteLine(kv.Get("GuildEvents"));
         }
 
-        private static void produceJSON(string item)
+        private static NameValueCollection Sanitize(string item)
         {
-            string datatype = item.Split('=')[0].Trim();
-            string data = item.Split('=')[1].Trim().Trim('"').TrimEnd(';');
-
-            if (datatype == "GuildEvents")
-            {
-                string[] elements = data.Split(';');
-
-                JArray events = new JArray();
-                foreach (string x in elements)
-                {
-                    string[] eventdetails = x.Split(',');
-                    events.Add(new JObject(
-                        new JProperty("date", eventdetails[1] + "." + eventdetails[0]),
-                        new JProperty("weekday", eventdetails[2]),
-                        new JProperty("time", eventdetails[3] + ":" + eventdetails[4]),
-                        new JProperty("eventType", Enum.GetName(typeof(eventTypes),Convert.ToInt32(eventdetails[5]))),
-                        new JProperty("title", eventdetails[6]),
-                        new JProperty("calendarType", eventdetails[7]),
-                        new JProperty("texture", eventdetails[8])));//TODO: enum
-                }
-                JObject guildEvents = new JObject(
-                    new JProperty("GuildEvents", events));
-                Console.WriteLine(guildEvents.ToString());
-            }
+            NameValueCollection ret = new NameValueCollection();
+            string[] split = item.Split('=');
+            ret.Add(split[0].Trim(), split[1].Trim().Trim('"').Trim(';'));
+            return ret;
         }
     }
 }
