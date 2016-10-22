@@ -1,0 +1,1 @@
+﻿# Client to sync WoW Data
