@@ -20,7 +20,7 @@ namespace RTWoWDataClient
             }
             using (WebClient client = new WebClient())
             {
-                client.UploadValues("http://ragetroops.eu/api/wowdata/input.php", kv);
+                client.UploadValues("http://ragetroops.eu/api/wowdata/input", kv);
             }
             Console.WriteLine(kv.Get("GuildEvents"));
         }
@@ -29,7 +29,7 @@ namespace RTWoWDataClient
         {
             NameValueCollection ret = new NameValueCollection();
             string[] split = item.Split('=');
-            ret.Add(split[0].Trim(), split[1].Trim().Trim('"').Trim(';'));
+            ret.Add(split[0].Trim(), split[1].Trim().Trim('"').Trim(';')); // Not pretty
             return ret;
         }
     }
